@@ -8,8 +8,10 @@ import com.tabela.fipe.infra.usecase.response.ReferenceResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+
 import static com.tabela.fipe.infra.shared.JSON.*;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 
@@ -31,7 +33,8 @@ public class FindFipeTableHistoricUseCase {
         final List<ReferenceResponse> referenceList = parseReferenceResponseList(referenceTableFuture.getBody());
         final List<FipeTable> fipeTableRequest = referenceList
                 .stream()
-                .map(rf -> rf.getYear().compareTo(historicFipeTable.anoModelo()) >= 0 ? createFipeTable(historicFipeTable, rf.getCodigo()) : null)
+                .filter(rf -> rf.getYear().compareTo(historicFipeTable.anoModelo()) >= 0)
+                .map(rf -> createFipeTable(historicFipeTable, rf.getCodigo()))
                 .toList();
 
         final var futureFipeTable = fipeTableRequest
