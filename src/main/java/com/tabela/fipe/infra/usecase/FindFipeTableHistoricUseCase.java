@@ -7,6 +7,7 @@ import com.tabela.fipe.infra.usecase.response.FipeResponse;
 import com.tabela.fipe.infra.usecase.response.ReferenceResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,17 +20,23 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
 @RequiredArgsConstructor
 @Service
 public class FindFipeTableHistoricUseCase {
+
     private static final String TIPO_CONSULTA = "tradicional";
+
     private static final String TIPO_VEICULO = "carro";
+
     private static final String MODELO_CODIGO_EXTERNO = "";
+
     private final CustomHttpRequest httpRequest;
+
     @Value("${tabelafipe.consultar.fipe}")
     private String urlConsultarFipe;
+
     @Value("${tabelafipe.consultar.referencia}")
     private String urlReferencia;
 
     public List<FipeResponse> execute(final FipeTableHistoricRequestDTO historicFipeTable) {
-        final var referenceTableFuture = httpRequest.post(urlReferencia, getHeaders());
+        final ResponseEntity<String> referenceTableFuture = httpRequest.post(urlReferencia, getHeaders());
         final List<ReferenceResponse> referenceList = parseReferenceResponseList(referenceTableFuture.getBody());
         final List<FipeTable> fipeTableRequest = referenceList
                 .stream()
