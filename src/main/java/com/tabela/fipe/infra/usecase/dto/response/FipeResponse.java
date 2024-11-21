@@ -1,4 +1,4 @@
-package com.tabela.fipe.infra.usecase.response;
+package com.tabela.fipe.infra.usecase.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;

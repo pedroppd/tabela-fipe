@@ -2,23 +2,21 @@ package com.tabela.fipe.infra.usecase;
 
 import com.tabela.fipe.application.dto.request.FipeTableHistoricRequestDTO;
 import com.tabela.fipe.infra.gateway.CustomHttpRequest;
-import com.tabela.fipe.infra.usecase.request.FipeTable;
-import com.tabela.fipe.infra.usecase.response.FipeResponse;
-import com.tabela.fipe.infra.usecase.response.ReferenceResponse;
+import com.tabela.fipe.infra.usecase.dto.request.FipeTable;
+import com.tabela.fipe.infra.usecase.dto.response.FipeResponse;
+import com.tabela.fipe.infra.usecase.dto.response.ReferenceResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.tabela.fipe.infra.shared.JSON.*;
 import static io.micrometer.common.util.StringUtils.isEmpty;
 import static java.lang.Boolean.TRUE;
-import static java.util.Objects.isNull;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 

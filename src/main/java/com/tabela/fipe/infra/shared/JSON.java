@@ -3,7 +3,7 @@ package com.tabela.fipe.infra.shared;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.tabela.fipe.infra.usecase.response.ReferenceResponse;
+import com.tabela.fipe.infra.usecase.dto.response.ReferenceResponse;
 
 import java.util.List;
 

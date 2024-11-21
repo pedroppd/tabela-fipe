@@ -1,4 +1,4 @@
-package com.tabela.fipe.infra.usecase.request;
+package com.tabela.fipe.infra.usecase.dto.request;
 
 public record FipeTable(int codigoTipoVeiculo,
                         int codigoTabelaReferencia,

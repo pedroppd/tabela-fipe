@@ -2,7 +2,7 @@ package com.tabela.fipe.application;
 
 import com.tabela.fipe.infra.usecase.FindFipeTableHistoricUseCase;
 import com.tabela.fipe.application.dto.request.FipeTableHistoricRequestDTO;
-import com.tabela.fipe.infra.usecase.response.FipeResponse;
+import com.tabela.fipe.infra.usecase.dto.response.FipeResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
