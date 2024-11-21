@@ -11,9 +11,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.tabela.fipe.infra.shared.JSON.*;
+import static io.micrometer.common.util.StringUtils.isEmpty;
+import static java.lang.Boolean.TRUE;
+import static java.util.Objects.isNull;
+import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 
 
@@ -35,26 +41,44 @@ public class FindFipeTableHistoricUseCase {
     @Value("${tabelafipe.consultar.referencia}")
     private String urlReferencia;
 
-    public List<FipeResponse> execute(final FipeTableHistoricRequestDTO historicFipeTable) {
+    public List<FipeResponse> execute(final FipeTableHistoricRequestDTO historicFipeTable,
+                                      String month,
+                                      Integer beginYear,
+                                      Integer endYear) {
         final ResponseEntity<String> referenceTableFuture = httpRequest.post(urlReferencia, getHeaders());
         final List<ReferenceResponse> referenceList = parseReferenceResponseList(referenceTableFuture.getBody());
-        final List<FipeTable> fipeTableRequest = referenceList
+
+        final List<FipeTable> fipeTableRequestList = referenceList
                 .stream()
-                .filter(rf -> rf.getYear().compareTo(historicFipeTable.anoModelo()) >= 0)
+                .filter(rf -> rf.getYear().compareTo(historicFipeTable.anoModelo()) >= 0
+                        && filterByMonth(rf, month)
+                        && filterByYears(rf, beginYear, endYear))
                 .map(rf -> createFipeTable(historicFipeTable, rf.getCodigo()))
                 .toList();
 
-        final var futureFipeTable = fipeTableRequest
+        final var futureFipeTableList = fipeTableRequestList
                 .stream()
-                .map(ft -> supplyAsync(() -> httpRequest.post(urlConsultarFipe, getHeaders(), ft)))
+                .map(ft -> supplyAsync(() -> httpRequest.postWithRetry(urlConsultarFipe, getHeaders(), ft, new AtomicInteger(5))))
                 .toList();
 
-        return futureFipeTable
+        return futureFipeTableList
                 .stream()
                 .map(CompletableFuture::join)
                 .filter(fipe -> fipe.getStatusCode().value() == 200)
                 .map(fipe -> parse(fipe.getBody(), FipeResponse.class))
                 .toList();
+    }
+
+    private boolean filterByMonth(ReferenceResponse referenceResponse, String month) {
+        if (!isEmpty(month))
+            return referenceResponse.getMonth().compareToIgnoreCase(month) == 0;
+        return TRUE;
+    }
+
+    private boolean filterByYears(ReferenceResponse referenceResponse, Integer beginyear, Integer endYear) {
+        if (nonNull(beginyear) && nonNull(endYear))
+            return referenceResponse.getYear().compareTo(beginyear) >= 0 && referenceResponse.getYear().compareTo(endYear) <= 0;
+        return TRUE;
     }
 
     private static String[] getHeaders() {

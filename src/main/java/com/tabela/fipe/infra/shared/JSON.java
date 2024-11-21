@@ -24,7 +24,6 @@ public class JSON {
         try {
             ObjectMapper objectMapper = new ObjectMapper()
                     .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-
             return objectMapper.readValue(jsonString, new TypeReference<List<ReferenceResponse>>() {});
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse JSON", e);
