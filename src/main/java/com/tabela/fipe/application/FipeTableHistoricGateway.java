@@ -21,7 +21,7 @@ public class FipeTableHistoricGateway {
     @PostMapping("/tabela-fipe-historico")
     public ResponseEntity<List<FipeResponse>> buscar(@RequestBody final FipeTableHistoricRequestDTO fipeTableHistorico,
                                                      @RequestParam(name = "mes", required = false) final String month,
-                                                     @RequestParam(name = "anoInicio", required = false) Integer beginYear,
+                                                     @RequestParam(name = "anoInicio", required = false) final Integer beginYear,
                                                      @RequestParam(name = "anoFim", required = false) final Integer endYear) {
         final var fipeResponse = buscarHistoricoFipe.execute(fipeTableHistorico, month, beginYear, endYear);
         return ResponseEntity.ok().body(fipeResponse);
