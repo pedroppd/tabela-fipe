@@ -6,11 +6,16 @@ import com.tabela.fipe.infra.usecase.dto.request.FipeTable;
 import com.tabela.fipe.infra.usecase.dto.response.FipeResponse;
 import com.tabela.fipe.infra.usecase.dto.response.ReferenceResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -39,13 +44,21 @@ public class FindFipeTableHistoricUseCase {
     @Value("${tabelafipe.consultar.referencia}")
     private String urlReferencia;
 
+    private static final Logger logger = LoggerFactory.getLogger(FindFipeTableHistoricUseCase.class);
+
     public List<FipeResponse> execute(final FipeTableHistoricRequestDTO historicFipeTable,
-                                      String month,
-                                      Integer beginYear,
-                                      Integer endYear) {
-        final ResponseEntity<String> referenceTableFuture = httpRequest.post(urlReferencia, getHeaders());
+                                      final String month,
+                                      final Integer beginYear,
+                                      final Integer endYear) {
+        logger.info("Getting reference tables - {}", Thread.currentThread().getName());
+        final ResponseEntity<String> referenceTableFuture = httpRequest.postWithRetry(urlReferencia, getHeaders(), Duration.ofSeconds(2), new AtomicInteger(3));
+        if (referenceTableFuture.getStatusCode().value() != 200) {
+            logger.error("Error to try catch the references: {} - {}", referenceTableFuture.getStatusCode(), Thread.currentThread().getName());
+            throw new RuntimeException("Error to try catch the references");
+        }
         final List<ReferenceResponse> referenceList = parseReferenceResponseList(referenceTableFuture.getBody());
 
+        logger.info("Filtering reference tables - {}", Thread.currentThread().getName());
         final List<FipeTable> fipeTableRequestList = referenceList
                 .stream()
                 .filter(rf -> rf.getYear().compareTo(historicFipeTable.anoModelo()) >= 0
@@ -54,14 +67,25 @@ public class FindFipeTableHistoricUseCase {
                 .map(rf -> createFipeTable(historicFipeTable, rf.getCodigo()))
                 .toList();
 
+        logger.info("Doing requests - {}", Thread.currentThread().getName());
         final var futureFipeTableList = fipeTableRequestList
                 .stream()
-                .map(ft -> supplyAsync(() -> httpRequest.postWithRetry(urlConsultarFipe, getHeaders(), ft, new AtomicInteger(5))))
+                .map(ft -> supplyAsync(() -> httpRequest.postWithRetry(urlConsultarFipe, getHeaders(), ft, Duration.ofSeconds(2), new AtomicInteger(5)))
+                        .handle((result, ex) -> {
+                            if (nonNull(ex)) {
+                                logger.error("Error processing request", ex);
+                                return null;
+                            }
+                            return result;
+                        }))
                 .toList();
+
+        CompletableFuture.allOf(futureFipeTableList.toArray(new CompletableFuture[0])).join();
 
         return futureFipeTableList
                 .stream()
                 .map(CompletableFuture::join)
+                .filter(Objects::nonNull)
                 .filter(fipe -> fipe.getStatusCode().value() == 200)
                 .map(fipe -> parse(fipe.getBody(), FipeResponse.class))
                 .toList();
@@ -73,9 +97,9 @@ public class FindFipeTableHistoricUseCase {
         return TRUE;
     }
 
-    private boolean filterByYears(ReferenceResponse referenceResponse, Integer beginyear, Integer endYear) {
-        if (nonNull(beginyear) && nonNull(endYear))
-            return referenceResponse.getYear().compareTo(beginyear) >= 0 && referenceResponse.getYear().compareTo(endYear) <= 0;
+    private boolean filterByYears(ReferenceResponse referenceResponse, Integer beginYear, Integer endYear) {
+        if (nonNull(beginYear) && nonNull(endYear))
+            return referenceResponse.getYear().compareTo(beginYear) >= 0 && referenceResponse.getYear().compareTo(endYear) <= 0;
         return TRUE;
     }
 

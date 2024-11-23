@@ -9,5 +9,4 @@ public class FipeApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(FipeApplication.class, args);
 	}
-
 }
