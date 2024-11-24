@@ -48,7 +48,7 @@ public class FindFipeTableHistoricUseCase {
     private static final Logger logger = LoggerFactory.getLogger(FindFipeTableHistoricUseCase.class);
 
     public List<FipeResponse> execute(final FipeTableHistoricRequestDTO historicFipeTable,
-                                      final String month,
+                                      final List<String> months,
                                       final Integer beginYear,
                                       final Integer endYear) {
         logger.info("Getting reference tables - {}", Thread.currentThread().getName());
@@ -63,7 +63,7 @@ public class FindFipeTableHistoricUseCase {
         final List<FipeTable> fipeTableRequestList = referenceList
                 .stream()
                 .filter(rf -> rf.getYear().compareTo(historicFipeTable.anoModelo()) >= 0
-                        && filterByMonth(rf, month)
+                        && filterByMonth(rf, months)
                         && filterByYears(rf, beginYear, endYear))
                 .map(rf -> createFipeTable(historicFipeTable, rf.getCodigo()))
                 .toList();
@@ -92,9 +92,11 @@ public class FindFipeTableHistoricUseCase {
                 .toList();
     }
 
-    private boolean filterByMonth(ReferenceResponse referenceResponse, String month) {
-        if (!isEmpty(month))
-            return referenceResponse.getMonth().compareToIgnoreCase(month) == 0;
+    private boolean filterByMonth(ReferenceResponse referenceResponse, List<String> months) {
+        if (!months.isEmpty()) {
+            final var monthsLowerCase = months.stream().map(String::toLowerCase).toList();
+            return monthsLowerCase.contains(referenceResponse.getMonth().toLowerCase());
+        }
         return TRUE;
     }
 
