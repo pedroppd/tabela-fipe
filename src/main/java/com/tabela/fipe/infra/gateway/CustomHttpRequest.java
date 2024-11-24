@@ -48,7 +48,7 @@ public class CustomHttpRequest {
     public <R> ResponseEntity<String> postWithRetry(final String url,
                                                     final String[] headers,
                                                     final R body,
-                                                    Duration duration,
+                                                    final Duration duration,
                                                     AtomicInteger counter) {
         try {
             final HttpRequest request = HttpRequest.newBuilder().uri(new URI(url))

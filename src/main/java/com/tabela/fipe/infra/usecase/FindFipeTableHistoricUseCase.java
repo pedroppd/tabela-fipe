@@ -52,7 +52,7 @@ public class FindFipeTableHistoricUseCase {
                                       final Integer beginYear,
                                       final Integer endYear) {
         logger.info("Getting reference tables - {}", Thread.currentThread().getName());
-        final ResponseEntity<String> referenceTableFuture = httpRequest.postWithRetry(urlReferencia, getHeaders(), Duration.ofSeconds(5), new AtomicInteger(3));
+        final ResponseEntity<String> referenceTableFuture = httpRequest.postWithRetry(urlReferencia, getHeaders(), Duration.ofMillis(1), new AtomicInteger(2));
         if (referenceTableFuture.getStatusCode().value() != 200) {
             logger.error("Error to try catch the references: {} - {}", referenceTableFuture.getStatusCode(), Thread.currentThread().getName());
             throw new ReferenceTableException("Error to try catch the references", referenceTableFuture.getStatusCode().value());
@@ -71,7 +71,7 @@ public class FindFipeTableHistoricUseCase {
         logger.info("Doing requests - {}", Thread.currentThread().getName());
         final var futureFipeTableList = fipeTableRequestList
                 .stream()
-                .map(ft -> supplyAsync(() -> httpRequest.postWithRetry(urlConsultarFipe, getHeaders(), ft, Duration.ofSeconds(2), new AtomicInteger(5)))
+                .map(ft -> supplyAsync(() -> httpRequest.postWithRetry(urlConsultarFipe, getHeaders(), ft, Duration.ofMillis(1), new AtomicInteger(2)))
                         .handle((result, ex) -> {
                             if (nonNull(ex)) {
                                 logger.error("Error processing request", ex);
@@ -92,25 +92,25 @@ public class FindFipeTableHistoricUseCase {
                 .toList();
     }
 
-    private boolean filterByMonth(ReferenceResponse referenceResponse, List<String> months) {
-        if (!months.isEmpty()) {
+    private boolean filterByMonth(final ReferenceResponse referenceResponse, final List<String> months) {
+        if (nonNull(months)) {
             final var monthsLowerCase = months.stream().map(String::toLowerCase).toList();
             return monthsLowerCase.contains(referenceResponse.getMonth().toLowerCase());
         }
         return TRUE;
     }
 
-    private boolean filterByYears(ReferenceResponse referenceResponse, Integer beginYear, Integer endYear) {
+    private boolean filterByYears(final ReferenceResponse referenceResponse, final Integer beginYear, final Integer endYear) {
         if (nonNull(beginYear) && nonNull(endYear))
             return referenceResponse.getYear().compareTo(beginYear) >= 0 && referenceResponse.getYear().compareTo(endYear) <= 0;
         return TRUE;
     }
 
     private static String[] getHeaders() {
-        return new String[]{"Content-Type", "application/json"};
+        return new String[]{"Content-Type", "application/json", "User-Agent", "insomnia/10.0.0"};
     }
 
-    private FipeTable createFipeTable(FipeTableHistoricRequestDTO fipeTable, int referenceTable) {
+    private FipeTable createFipeTable(final FipeTableHistoricRequestDTO fipeTable, final int referenceTable) {
         return new FipeTable(fipeTable.codigoTipoVeiculo(),
                 referenceTable,
                 fipeTable.codigoModelo(),
