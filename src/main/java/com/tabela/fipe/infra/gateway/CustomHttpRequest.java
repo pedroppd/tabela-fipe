@@ -1,6 +1,7 @@
 package com.tabela.fipe.infra.gateway;
 
 
+import com.tabela.fipe.infra.configuration.exceptions.HttpRequestException;
 import com.tabela.fipe.infra.usecase.FindFipeTableHistoricUseCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +41,7 @@ public class CustomHttpRequest {
             return ResponseEntity.status(response.statusCode()).body(response.body());
         } catch (Exception ex) {
             logger.error("Error to try catch the {} - {} - {}", url, ex.getMessage(), Thread.currentThread().getName());
-            throw new RuntimeException(ex);
+            throw new HttpRequestException(ex.getMessage());
         }
     }
 
@@ -64,7 +65,7 @@ public class CustomHttpRequest {
             return ResponseEntity.status(response.statusCode()).body(response.body());
         } catch (Exception ex) {
             logger.error("Error to try catch the {} - {} - {}", url, ex.getMessage(), Thread.currentThread().getName());
-            throw new RuntimeException(ex);
+            throw new HttpRequestException(ex.getMessage());
         }
     }
 
@@ -87,7 +88,7 @@ public class CustomHttpRequest {
             return ResponseEntity.status(response.statusCode()).body(response.body());
         } catch (Exception ex) {
             logger.error("Error to make api request - {} - {} - {}", url, ex.getMessage(), Thread.currentThread().getName());
-            throw new RuntimeException(ex);
+            throw new HttpRequestException(ex.getMessage());
         }
     }
 }

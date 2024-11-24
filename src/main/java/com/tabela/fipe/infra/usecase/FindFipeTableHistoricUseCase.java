@@ -1,6 +1,7 @@
 package com.tabela.fipe.infra.usecase;
 
 import com.tabela.fipe.application.dto.request.FipeTableHistoricRequestDTO;
+import com.tabela.fipe.infra.configuration.exceptions.ReferenceTableException;
 import com.tabela.fipe.infra.gateway.CustomHttpRequest;
 import com.tabela.fipe.infra.usecase.dto.request.FipeTable;
 import com.tabela.fipe.infra.usecase.dto.response.FipeResponse;
@@ -51,10 +52,10 @@ public class FindFipeTableHistoricUseCase {
                                       final Integer beginYear,
                                       final Integer endYear) {
         logger.info("Getting reference tables - {}", Thread.currentThread().getName());
-        final ResponseEntity<String> referenceTableFuture = httpRequest.postWithRetry(urlReferencia, getHeaders(), Duration.ofSeconds(2), new AtomicInteger(3));
+        final ResponseEntity<String> referenceTableFuture = httpRequest.postWithRetry(urlReferencia, getHeaders(), Duration.ofSeconds(5), new AtomicInteger(3));
         if (referenceTableFuture.getStatusCode().value() != 200) {
             logger.error("Error to try catch the references: {} - {}", referenceTableFuture.getStatusCode(), Thread.currentThread().getName());
-            throw new RuntimeException("Error to try catch the references");
+            throw new ReferenceTableException("Error to try catch the references", referenceTableFuture.getStatusCode().value());
         }
         final List<ReferenceResponse> referenceList = parseReferenceResponseList(referenceTableFuture.getBody());
 
