@@ -3,6 +3,8 @@ package com.tabela.fipe.infra.gateway;
 
 import com.tabela.fipe.infra.configuration.exceptions.HttpRequestException;
 import com.tabela.fipe.infra.usecase.FindFipeTableHistoricUseCase;
+import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -18,19 +20,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.tabela.fipe.infra.shared.JSON.stringify;
 
 @Service
+@AllArgsConstructor
 public class CustomHttpRequest {
 
     private final HttpClient client;
 
     private static final Logger logger = LoggerFactory.getLogger(CustomHttpRequest.class);
 
-    public CustomHttpRequest() {
-        this.client = HttpClient.newHttpClient();
-    }
-
-    public <R> ResponseEntity<String> post(final String url,
-                                           final String[] headers,
-                                           final R body) {
+    public <R> ResponseEntity<String> post(final String url, final String[] headers, final R body) {
         try {
             final String jsonBody = stringify(body);
             final HttpRequest request = HttpRequest.newBuilder().uri(new URI(url))
@@ -45,7 +42,7 @@ public class CustomHttpRequest {
         }
     }
 
-    public <R> ResponseEntity<String> postWithRetry(final String url,
+    public <R> Pair<R, ResponseEntity<String>> postWithRetry(final String url,
                                                     final String[] headers,
                                                     final R body,
                                                     final Duration duration,
@@ -62,17 +59,14 @@ public class CustomHttpRequest {
                 Thread.sleep(duration);
                 this.postWithRetry(url, headers, body, duration, counter);
             }
-            return ResponseEntity.status(response.statusCode()).body(response.body());
+            return Pair.of(body, ResponseEntity.status(response.statusCode()).body(response.body()));
         } catch (Exception ex) {
             logger.error("Error to try catch the {} - {} - {}", url, ex.getMessage(), Thread.currentThread().getName());
             throw new HttpRequestException(ex.getMessage());
         }
     }
 
-    public <R> ResponseEntity<String> postWithRetry(final String url,
-                                                    final String[] headers,
-                                                    final Duration duration,
-                                                    AtomicInteger counter) {
+    public <R> ResponseEntity<String> postWithRetry(final String url, final String[] headers, final Duration duration, AtomicInteger counter) {
         try {
             final HttpRequest request = HttpRequest.newBuilder().uri(new URI(url))
                     .headers(headers)

@@ -5,6 +5,7 @@ import com.tabela.fipe.infra.configuration.exceptions.ReferenceTableException;
 import com.tabela.fipe.infra.gateway.CustomHttpRequest;
 import com.tabela.fipe.infra.usecase.dto.request.FipeTable;
 import com.tabela.fipe.infra.usecase.dto.response.FipeResponse;
+import com.tabela.fipe.infra.usecase.dto.response.HistoricFipeResponse;
 import com.tabela.fipe.infra.usecase.dto.response.ReferenceResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -47,7 +48,7 @@ public class FindFipeTableHistoricUseCase {
 
     private static final Logger logger = LoggerFactory.getLogger(FindFipeTableHistoricUseCase.class);
 
-    public List<FipeResponse> execute(final FipeTableHistoricRequestDTO historicFipeTable,
+    public List<HistoricFipeResponse> execute(final FipeTableHistoricRequestDTO historicFipeTable,
                                       final List<String> months,
                                       final Integer beginYear,
                                       final Integer endYear) {
@@ -87,8 +88,12 @@ public class FindFipeTableHistoricUseCase {
                 .stream()
                 .map(CompletableFuture::join)
                 .filter(Objects::nonNull)
-                .filter(fipe -> fipe.getStatusCode().value() == 200)
-                .map(fipe -> parse(fipe.getBody(), FipeResponse.class))
+                .map((fipe) -> {
+                    if(fipe.getRight().getStatusCode().is2xxSuccessful()) {
+                        return new HistoricFipeResponse(fipe.getLeft(), parse(fipe.getRight().getBody(), FipeResponse.class), fipe.getRight().getStatusCode().value());
+                    }
+                    return new HistoricFipeResponse(fipe.getLeft(), null, fipe.getRight().getStatusCode().value());
+                })
                 .toList();
     }
 
