@@ -22,7 +22,7 @@ public class FipeTableHistoricGateway {
     private final ReprocessFipeTableHistoricUseCase reprocessFipeTableHistoric;
 
     @PostMapping("/historico")
-    public ResponseEntity<List<HistoricFipeResponse>> buscar(@RequestBody final FipeTableHistoricRequestDTO fipeTableHistorico,
+    public ResponseEntity<List<HistoricFipeResponse>> find(@RequestBody final FipeTableHistoricRequestDTO fipeTableHistorico,
                                                              @RequestParam(name = "mes", required = false) final List<String> months,
                                                              @RequestParam(name = "anoInicio", required = false) final Integer beginYear,
                                                              @RequestParam(name = "anoFim", required = false) final Integer endYear) {

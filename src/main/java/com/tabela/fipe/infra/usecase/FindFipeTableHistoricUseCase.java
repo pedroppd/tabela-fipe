@@ -8,7 +8,6 @@ import com.tabela.fipe.infra.usecase.dto.response.FipeResponse;
 import com.tabela.fipe.infra.usecase.dto.response.HistoricFipeResponse;
 import com.tabela.fipe.infra.usecase.dto.response.ReferenceResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.SneakyThrows;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,7 +21,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.tabela.fipe.infra.shared.JSON.*;
-import static io.micrometer.common.util.StringUtils.isEmpty;
+import static com.tabela.fipe.infra.shared.TableFipe.getHeaders;
+import static com.tabela.fipe.infra.shared.TableFipe.getHistoricFipeResponse;
 import static java.lang.Boolean.TRUE;
 import static java.util.Objects.nonNull;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
@@ -49,9 +49,9 @@ public class FindFipeTableHistoricUseCase {
     private static final Logger logger = LoggerFactory.getLogger(FindFipeTableHistoricUseCase.class);
 
     public List<HistoricFipeResponse> execute(final FipeTableHistoricRequestDTO historicFipeTable,
-                                      final List<String> months,
-                                      final Integer beginYear,
-                                      final Integer endYear) {
+                                              final List<String> months,
+                                              final Integer beginYear,
+                                              final Integer endYear) {
         logger.info("Getting reference tables - {}", Thread.currentThread().getName());
         final ResponseEntity<String> referenceTableFuture = httpRequest.postWithRetry(urlReferencia, getHeaders(), Duration.ofMillis(1), new AtomicInteger(2));
         if (referenceTableFuture.getStatusCode().value() != 200) {
@@ -84,17 +84,7 @@ public class FindFipeTableHistoricUseCase {
 
         CompletableFuture.allOf(futureFipeTableList.toArray(new CompletableFuture[0])).join();
 
-        return futureFipeTableList
-                .stream()
-                .map(CompletableFuture::join)
-                .filter(Objects::nonNull)
-                .map((fipe) -> {
-                    if(fipe.getRight().getStatusCode().is2xxSuccessful()) {
-                        return new HistoricFipeResponse(fipe.getLeft(), parse(fipe.getRight().getBody(), FipeResponse.class), fipe.getRight().getStatusCode().value());
-                    }
-                    return new HistoricFipeResponse(fipe.getLeft(), null, fipe.getRight().getStatusCode().value());
-                })
-                .toList();
+        return getHistoricFipeResponse(futureFipeTableList);
     }
 
     private boolean filterByMonth(final ReferenceResponse referenceResponse, final List<String> months) {
@@ -109,10 +99,6 @@ public class FindFipeTableHistoricUseCase {
         if (nonNull(beginYear) && nonNull(endYear))
             return referenceResponse.getYear().compareTo(beginYear) >= 0 && referenceResponse.getYear().compareTo(endYear) <= 0;
         return TRUE;
-    }
-
-    private static String[] getHeaders() {
-        return new String[]{"Content-Type", "application/json", "User-Agent", "insomnia/10.0.0"};
     }
 
     private FipeTable createFipeTable(final FipeTableHistoricRequestDTO fipeTable, final int referenceTable) {
